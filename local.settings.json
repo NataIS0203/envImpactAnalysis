@@ -3,7 +3,7 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "OpenAPIKey": "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",
+    "OpenAPIKey": "key",
     "ResourcesPromptsFileName": "resourcesPrompts.txt",
     "SpeciesPromptsFileName": "speciesPrompts.txt",
     "ChatGPTModel": "gpt-4o"

@@ -9,6 +9,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System.Net;
@@ -20,15 +21,18 @@ namespace Durable.Functions
         private readonly ILogger<EnvImpactDurableFunction> _logger;
         private readonly IEnvImpactReportService _dataExportService;
         private readonly IServiceProviderValidatorFactory _validatorFactory;
+        private readonly IMemoryCache _memoryCache;
 
         public EnvImpactDurableFunction(
             ILogger<EnvImpactDurableFunction> logger,
             IEnvImpactReportService dataExportService,
-            IServiceProviderValidatorFactory validatorFactory)
+            IServiceProviderValidatorFactory validatorFactory,
+            IMemoryCache memoryCache)
         {
             _logger = logger;
             _dataExportService = dataExportService;
             _validatorFactory = validatorFactory;
+            _memoryCache = memoryCache;
         }
 
         [Function(nameof(EnvImpactDurableFunction))]

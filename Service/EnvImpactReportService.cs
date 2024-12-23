@@ -84,24 +84,33 @@ namespace Durable.Services
 
         private async Task<List<string>> GetOpenAIResponse(PromptModel prompts)
         {
-            List<string> result = new List<string>();
+            var result = new List<string>();
             try
             {
                 ChatClient client = new(model: Environment.GetEnvironmentVariable("ChatGPTModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
+                
                 var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
                 var promprChatMessage = prompts.Questions.Select(z => new UserChatMessage(z));
-                List<ChatMessage> messages = new List<ChatMessage>();
+                var messages = new List<ChatMessage>();
                 messages.AddRange(promprAssitChatMessage);
                 messages.AddRange(promprChatMessage);
                 AsyncCollectionResult<StreamingChatCompletionUpdate> completionUpdates = client.CompleteChatStreamingAsync(messages);
+
+                string  currentBlock = string.Empty;
                 await foreach (StreamingChatCompletionUpdate completionUpdate in completionUpdates)
                 {
                     if (completionUpdate.ContentUpdate.Count > 0)
                     {
-                        result.Add(completionUpdate.ContentUpdate[0].Text);
+                        var currLine = completionUpdate.ContentUpdate[0].Text;
+                        currentBlock = string.Concat(currentBlock, currLine);
+                        if (currLine.Equals("\n"))
+                        {
+                            result.Add(currentBlock);
+                            currentBlock = string.Empty;
+                        }
                     }
                 }
-
+                result.Add(currentBlock);
                 return result;
             }
             catch (Exception ex)

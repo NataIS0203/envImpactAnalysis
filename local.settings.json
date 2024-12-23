@@ -3,7 +3,7 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "OpenAPIKey": "key",
+    "OpenAPIKey": "kry",
     "ResourcesPromptsFileName": "resourcesPrompts.txt",
     "SpeciesPromptsFileName": "speciesPrompts.txt",
     "AssistantPrompt": "You are a helpful assistant. Help me with environmental impact research",

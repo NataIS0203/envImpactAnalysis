@@ -1,4 +1,4 @@
-# impactAnalysis
+# EncImpactAnalysis
  Simple proof of concept project on the use of Durable Functions for two endpoints with single orchestration, Memory Cache, and OpenAI
 * Two endpoints: http://localhost:xxx/api/species?name=(string)&region=(string)&percentage=(int?) and http://localhost:xxx/api/resources?name=(string)&region=(string)&percentage=(int?) .
 * Query parameters: name of animal, plants, etc., or resources (specific mineral, natural resources), region (of habitat or allocation), and percentage of that reduction (of population or resource's presence). 

@@ -50,13 +50,20 @@ namespace Durable.Functions
             [ActivityTrigger] GetBaseRequest request)
         {
             _logger.LogInformation($"GetReportsRun for report {request.ReportName}.");
-
-            string outputs = "failed"; 
+            string cacheKey = string.Concat("filename", request.ReportName, request.Name, request.Region, request.Percentage);
+            string filename = (string)ServiceUtilities.GetCachedObject(_memoryCache, cacheKey);
+            if (!filename.IsNullOrEmpty())
+            {
+                return filename;
+            }
+            string outputs = "failed";
             outputs = await _dataExportService.GetReportAsync(
                         request.Name,
                         request.Region,
                         int.Parse(request.Percentage ?? "100"),
                         request.ReportName);
+
+            ServiceUtilities.SetCachedObject(_memoryCache, cacheKey, outputs);
 
             return outputs;
         }

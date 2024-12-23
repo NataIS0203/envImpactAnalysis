@@ -1,4 +1,3 @@
-using Durable.Functions.Validators;
 using Durable.Services;
 using Durable.Services.Interfaces;
 using Durable.Utilities;
@@ -18,8 +17,7 @@ using Microsoft.Extensions.Hosting;
 
 //builder.Build().Run();
 IHost hostBuilder = new HostBuilder()
-    .ConfigureFunctionsWebApplication(workerApp =>
-{ })
+    .ConfigureFunctionsWebApplication(workerApp => { })
     .ConfigureServices((hostContext, services) =>
     {
         services.AddSingleton<IEnvImpactReportService, EnvImpactReportService>();

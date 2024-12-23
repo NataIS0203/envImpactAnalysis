@@ -1,0 +1,7 @@
+{
+  "questions": [
+    "Provide habitate description of {0}",
+    "Provide information about an impact on environment of {0} in {1} region",
+    "Provide information about an impact on environment if {0} population  in {1} region reduced by {2} percent"
+    ]
+}

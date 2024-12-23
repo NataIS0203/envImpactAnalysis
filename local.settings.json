@@ -3,8 +3,8 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "OpenAPIKey": "key",
-    "ResourcesPromptsFileName": "...\resourcesPrompts.json",
-    "SpeciesPromptsFileName": "...\\speciesPrompts.json"
+    "OpenAPIKey": "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",
+    "ResourcesPromptsFileName": "resourcesPrompts.txt",
+    "SpeciesPromptsFileName": "speciesPrompts.txt"
   }
 }

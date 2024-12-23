@@ -47,7 +47,8 @@ namespace Durable.Functions
         {
             _logger.LogInformation($"GetReportsRun for report {request.ReportName}.");
 
-            string outputs = "failed"; outputs = await _dataExportService.GetReportAsync(
+            string outputs = "failed"; 
+            outputs = await _dataExportService.GetReportAsync(
                         request.Name,
                         request.Region,
                         int.Parse(request.Percentage ?? "100"),
@@ -69,7 +70,7 @@ namespace Durable.Functions
         {
             _logger.LogInformation($"GetSpeciesEnvImpact with query: {query?.Keys}");
 
-            (GetBaseRequest dataExportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, "Species");
+            (GetBaseRequest reportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, "Species");
 
             if (!request.validationResult.IsValid)
             {
@@ -79,7 +80,7 @@ namespace Durable.Functions
 
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(EnvImpactDurableFunction), query);
+                nameof(EnvImpactDurableFunction), request.reportRequest);
 
             _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
@@ -100,7 +101,7 @@ namespace Durable.Functions
             IDictionary<string, string> query)
         {
             _logger.LogInformation($"GetResourcesEnvImpact with query: {query?.Keys}");
-            (GetBaseRequest dataExportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, "Resources");
+            (GetBaseRequest reportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, "Resources");
 
             if (!request.validationResult.IsValid)
             {
@@ -118,7 +119,7 @@ namespace Durable.Functions
             return await client.CreateCheckStatusResponseAsync(req, instanceId, HttpStatusCode.Accepted);
         }
 
-        private async Task<(GetBaseRequest dataExportRequest, ValidationResult validationResult)> GetBaseRequestAsync(HttpRequestData req, IDictionary<string, string> query, string reportName)
+        private async Task<(GetBaseRequest reportRequest, ValidationResult validationResult)> GetBaseRequestAsync(HttpRequestData req, IDictionary<string, string> query, string reportName)
         {
             query.TryGetValue("name", out string name);
             query.TryGetValue("region", out string? region);

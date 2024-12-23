@@ -1,7 +1,7 @@
 using Durable.Functions.Validators;
 using Durable.Services;
 using Durable.Services.Interfaces;
-using FluentValidation;
+using Durable.Utilities;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,8 +23,7 @@ IHost hostBuilder = new HostBuilder()
     .ConfigureServices((hostContext, services) =>
     {
         services.AddSingleton<IEnvImpactReportService, EnvImpactReportService>();
-
-        services.AddValidatorsFromAssemblyContaining<GetBaseRequestValidator>();
+        services.AddSingleton<IServiceProviderValidatorFactory, ServiceProviderValidatorFactory>();
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
     })
     .Build();

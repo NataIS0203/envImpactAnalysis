@@ -8,10 +8,8 @@ namespace Durable.Configuration.Maps
     {
         public DataExportProfile()
         {
-            CreateMap<PromptModel, UserChatMessage>()
-                .ForMember(dest => dest.Content, options => options.MapFrom(src => src.Questions));
-
-            CreateMap<List<string>, ChatMessageContent>();
+           // CreateMap<string, ChatMessage>()
+            //    .ForMember(dest => dest, options => options.MapFrom(src =>new UserChatMessage( src)));
         }
     }
 }

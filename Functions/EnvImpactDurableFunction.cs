@@ -121,7 +121,7 @@ namespace Durable.Functions
 
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(EnvImpactDurableFunction), query);
+                nameof(EnvImpactDurableFunction), request.reportRequest);
 
             _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 

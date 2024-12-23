@@ -1,11 +1,9 @@
-﻿namespace Durable.Services.Interfaces
+﻿using Durable.Service.Models;
+
+namespace Durable.Services.Interfaces
 {
     public interface IEnvImpactReportService
     {
-        Task<string> GetReportAsync(
-            string name,
-            string? region,
-            int percentage,
-            string reportName);
+        Task<string> GetReportAsync(ReportBaseModel model);
     }
 }

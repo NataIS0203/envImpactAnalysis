@@ -1,6 +1,8 @@
+using AutoMapper;
 using Durable.Api.Functions;
 using Durable.Functions.Models;
 using Durable.Functions.Validators;
+using Durable.Service.Models;
 using Durable.Services.Interfaces;
 using Durable.Utilities;
 using FluentValidation.Results;
@@ -19,12 +21,14 @@ namespace Durable.Functions
     public class EnvImpactDurableFunction : BaseFunction
     {
         private readonly ILogger<EnvImpactDurableFunction> _logger;
+        private readonly IMapper _mapper;
         private readonly IEnvImpactReportService _dataExportService;
         private readonly IServiceProviderValidatorFactory _validatorFactory;
         private readonly IMemoryCache _memoryCache;
 
         public EnvImpactDurableFunction(
             ILogger<EnvImpactDurableFunction> logger,
+            IMapper mapper,
             IEnvImpactReportService dataExportService,
             IServiceProviderValidatorFactory validatorFactory,
             IMemoryCache memoryCache)
@@ -33,6 +37,7 @@ namespace Durable.Functions
             _dataExportService = dataExportService;
             _validatorFactory = validatorFactory;
             _memoryCache = memoryCache;
+            _mapper = mapper;
         }
 
         [Function(nameof(EnvImpactDurableFunction))]
@@ -57,11 +62,7 @@ namespace Durable.Functions
                 return filename;
             }
             string outputs = "failed";
-            outputs = await _dataExportService.GetReportAsync(
-                        request.Name,
-                        request.Region,
-                        int.Parse(request.Percentage ?? "100"),
-                        request.ReportName);
+            outputs = await _dataExportService.GetReportAsync(_mapper.Map<ReportBaseModel>(request));
 
             ServiceUtilities.SetCachedObject(_memoryCache, cacheKey, outputs);
 

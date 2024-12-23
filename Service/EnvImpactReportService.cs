@@ -13,25 +13,19 @@ namespace Durable.Services
     public class EnvImpactReportService : IEnvImpactReportService
     {
         private readonly ILogger<EnvImpactReportService> _logger;
-        private readonly IMapper _mapper;
-        public EnvImpactReportService(ILogger<EnvImpactReportService> logger, IMapper mapper)
+        public EnvImpactReportService(ILogger<EnvImpactReportService> logger)
         {
             _logger = logger;
-            _mapper = mapper;
         }
 
-        public async Task<string> GetReportAsync(
-            string name,
-            string? region,
-            int percentage,
-            string reportName)
+        public async Task<string> GetReportAsync(ReportBaseModel model)
         {
             try
             {
-                var prompts = await GetPromptsAsync($"{reportName}PromptsFileName");
+                var prompts = await GetPromptsAsync($"{model.ReportName}PromptsFileName");
 
                 prompts.Questions = prompts.Questions
-                .Select(x => string.Format(x, name, region, percentage))
+                .Select(x => string.Format(x, model.Name, model.Region, model.Percentage))
                 .ToList();
 
                 List<string> openAIResponses = await GetOpenAIResponse(prompts);
@@ -41,7 +35,7 @@ namespace Durable.Services
                     // Set a variable to the Documents path.
                     string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-                    string fileName = Path.Combine(docPath, $"{name}{region ?? ""}With{percentage.ToString()}Percentage.txt");
+                    string fileName = Path.Combine(docPath, $"{model.Name}{model.Region ?? ""}With{model.Percentage.ToString()}Percentage.txt");
 
                     // Append text to an existing file named "WriteLines.txt".
                     using (StreamWriter outputFile = (File.Exists(fileName))

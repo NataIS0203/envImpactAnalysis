@@ -35,7 +35,7 @@ namespace Durable.Services
 
                 List<string> openAIResponses = await GetOpenAIResponse(prompts);
 
-                if (openAIResponses != null)
+                if (openAIResponses.Any())
                 {
                     // Set a variable to the Documents path.
                     string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -86,7 +86,7 @@ namespace Durable.Services
             List<string> result = new List<string>();
             try
             {
-                ChatClient client = new(model: "gpt-4o", apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
+                ChatClient client = new(model: Environment.GetEnvironmentVariable("ChatGPTModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
                 var promprChatMessage = prompts.Questions.Select(z => new UserChatMessage(z));
 
                 AsyncCollectionResult<StreamingChatCompletionUpdate> completionUpdates = client.CompleteChatStreamingAsync(promprChatMessage);

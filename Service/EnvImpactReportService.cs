@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using OpenAI.Chat;
 using System.ClientModel;
 using System.IO;
+using System.Linq;
 
 namespace Durable.Services
 {
@@ -87,9 +88,12 @@ namespace Durable.Services
             try
             {
                 ChatClient client = new(model: Environment.GetEnvironmentVariable("ChatGPTModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
+                var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
                 var promprChatMessage = prompts.Questions.Select(z => new UserChatMessage(z));
-
-                AsyncCollectionResult<StreamingChatCompletionUpdate> completionUpdates = client.CompleteChatStreamingAsync(promprChatMessage);
+                List<ChatMessage> messages = new List<ChatMessage>();
+                messages.AddRange(promprAssitChatMessage);
+                messages.AddRange(promprChatMessage);
+                AsyncCollectionResult<StreamingChatCompletionUpdate> completionUpdates = client.CompleteChatStreamingAsync(messages);
                 await foreach (StreamingChatCompletionUpdate completionUpdate in completionUpdates)
                 {
                     if (completionUpdate.ContentUpdate.Count > 0)

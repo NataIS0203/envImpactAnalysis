@@ -14,6 +14,10 @@ namespace Durable.Service.Models
 
         public int Percentage { get; set; }
 
+        public string? Additional { get; set; }
+
+        public string? ImageType { get; set; }
+
         public string ReportName { get; set; }
     }
 }

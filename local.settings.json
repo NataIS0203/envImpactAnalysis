@@ -6,7 +6,9 @@
     "OpenAPIKey": "key",
     "ResourcesPromptsFileName": "resourcesPrompts.txt",
     "SpeciesPromptsFileName": "speciesPrompts.txt",
+    "ImagesPromptsFileName": "imagesPrompts.txt",
     "AssistantPrompt": "You are a helpful assistant. Help me with environmental impact research",
-    "ChatGPTModel": "gpt-4o"
+    "ChatGPTModel": "gpt-4o-mini",
+    "ImageChatGPTModel": "dall-e-2"
   }
 }

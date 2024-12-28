@@ -9,6 +9,10 @@ namespace Durable.Functions.Models
 
         public string? Percentage { get; set; }
 
+        public string? Additional { get; set; }
+
+        public string? ImageType { get; set; }
+
         public string? ReportName { get; set; }
     }
 }

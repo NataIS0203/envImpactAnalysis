@@ -7,10 +7,15 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="imagesPrompts.txt" />
     <None Remove="resourcesPrompts.txt" />
     <None Remove="speciesPrompts.txt" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="imagesPrompts.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="resourcesPrompts.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>

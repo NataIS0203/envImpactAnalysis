@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Durable.Functions.Models;
+using Durable.Records;
 using Durable.Service.Models;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Visitors;
 using OpenAI.Chat;
 

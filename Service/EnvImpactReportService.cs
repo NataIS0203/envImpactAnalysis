@@ -131,7 +131,7 @@ namespace Durable.Services
             var result = new List<string>();
             try
             {
-                ImageClient client = new (model: Environment.GetEnvironmentVariable("ImageChatGPTModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
+                ImageClient client = new (model: Environment.GetEnvironmentVariable("ImageDallEModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
 
                 var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
                 var promprMessage = prompts.Questions.FirstOrDefault()??"random";

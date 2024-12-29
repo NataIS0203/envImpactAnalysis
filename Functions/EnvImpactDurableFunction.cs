@@ -19,27 +19,18 @@ using System.Net;
 
 namespace Durable.Functions
 {
-    public class EnvImpactDurableFunction : BaseFunction
+    public class EnvImpactDurableFunction(
+        ILogger<EnvImpactDurableFunction> logger,
+        IMapper mapper,
+        IEnvImpactReportService envImpactReportService,
+        IServiceProviderValidatorFactory validatorFactory,
+        IMemoryCache memoryCache) : BaseFunction
     {
-        private readonly ILogger<EnvImpactDurableFunction> _logger;
-        private readonly IMapper _mapper;
-        private readonly IEnvImpactReportService _envImpactReportService;
-        private readonly IServiceProviderValidatorFactory _validatorFactory;
-        private readonly IMemoryCache _memoryCache;
-
-        public EnvImpactDurableFunction(
-            ILogger<EnvImpactDurableFunction> logger,
-            IMapper mapper,
-            IEnvImpactReportService envImpactReportService,
-            IServiceProviderValidatorFactory validatorFactory,
-            IMemoryCache memoryCache)
-        {
-            _logger = logger;
-            _envImpactReportService = envImpactReportService;
-            _validatorFactory = validatorFactory;
-            _memoryCache = memoryCache;
-            _mapper = mapper;
-        }
+        private readonly ILogger<EnvImpactDurableFunction> _logger = logger;
+        private readonly IMapper _mapper = mapper;
+        private readonly IEnvImpactReportService _envImpactReportService = envImpactReportService;
+        private readonly IServiceProviderValidatorFactory _validatorFactory = validatorFactory;
+        private readonly IMemoryCache _memoryCache = memoryCache;
 
         [Function(nameof(EnvImpactDurableFunction))]
         public async Task<string> RunOrchestrator(
@@ -62,8 +53,8 @@ namespace Durable.Functions
             {
                 return filename;
             }
-            string outputs = "failed";
-            outputs = await _envImpactReportService.GetReportAsync(_mapper.Map<ReportBaseModel>(request));
+
+            var outputs = await _envImpactReportService.GetReportAsync(_mapper.Map<ReportBaseModel>(request));
 
             ServiceUtilities.SetCachedObject(_memoryCache, cacheKey, outputs);
 
@@ -83,17 +74,17 @@ namespace Durable.Functions
         {
             _logger.LogInformation($"GetSpeciesEnvImpact with query: {query?.Keys}");
 
-            (GetBaseRequest reportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, ReportTypeReport.Species.Name);
+            (GetBaseRequest reportRequest, ValidationResult validationResult) = await GetBaseRequestAsync(query, ReportTypeReport.Species.Name);
 
-            if (!request.validationResult.IsValid)
+            if (!validationResult.IsValid)
             {
-                return await HandleValidationResponse(req, request.validationResult);
+                return await HandleValidationResponse(req, validationResult);
             }
 
 
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(EnvImpactDurableFunction), request.reportRequest);
+                nameof(EnvImpactDurableFunction), reportRequest);
 
             _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
@@ -114,16 +105,16 @@ namespace Durable.Functions
             IDictionary<string, string> query)
         {
             _logger.LogInformation($"GetResourcesEnvImpact with query: {query?.Keys}");
-            (GetBaseRequest reportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, ReportTypeReport.Resources.Name);
+            (GetBaseRequest reportRequest, ValidationResult validationResult) = await GetBaseRequestAsync(query, ReportTypeReport.Resources.Name);
 
-            if (!request.validationResult.IsValid)
+            if (!validationResult.IsValid)
             {
-                return await HandleValidationResponse(req, request.validationResult);
+                return await HandleValidationResponse(req, validationResult);
             }
 
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(EnvImpactDurableFunction), request.reportRequest);
+                nameof(EnvImpactDurableFunction), reportRequest);
 
             _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
@@ -144,16 +135,16 @@ namespace Durable.Functions
             IDictionary<string, string> query)
         {
             _logger.LogInformation($"GetImageEnvImpact with query: {query?.Keys}");
-            (GetBaseRequest reportRequest, ValidationResult validationResult) request = await GetBaseRequestAsync(req, query, ReportTypeReport.Images.Name);
+            (GetBaseRequest reportRequest, ValidationResult validationResult) = await GetBaseRequestAsync(query, ReportTypeReport.Images.Name);
 
-            if (!request.validationResult.IsValid)
+            if (!validationResult.IsValid)
             {
-                return await HandleValidationResponse(req, request.validationResult);
+                return await HandleValidationResponse(req, validationResult);
             }
 
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
-                nameof(EnvImpactDurableFunction), request.reportRequest);
+                nameof(EnvImpactDurableFunction), reportRequest);
 
             _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
@@ -162,7 +153,7 @@ namespace Durable.Functions
             return await client.CreateCheckStatusResponseAsync(req, instanceId, HttpStatusCode.Accepted);
         }
 
-        private async Task<(GetBaseRequest reportRequest, ValidationResult validationResult)> GetBaseRequestAsync(HttpRequestData req, IDictionary<string, string> query, string reportName)
+        private static async Task<(GetBaseRequest reportRequest, ValidationResult validationResult)> GetBaseRequestAsync(IDictionary<string, string> query, string reportName)
         {
             query.TryGetValue("name", out string name);
             query.TryGetValue("region", out string? region);
@@ -182,7 +173,7 @@ namespace Durable.Functions
                     imageType = ImageTypeRecord.Painting.Name;
                     break;
             }
-            GetBaseRequest result = new GetBaseRequest()
+            GetBaseRequest result = new()
             {
                 Name = name,
                 Region = region,
@@ -192,7 +183,7 @@ namespace Durable.Functions
                 ReportName = reportName,
             };
 
-            GetBaseRequestValidator validator = new GetBaseRequestValidator();
+            GetBaseRequestValidator validator = new();
             ValidationResult validationResult = validator.Validate(result);
 
             return (result, validationResult);

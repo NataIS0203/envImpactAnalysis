@@ -12,19 +12,15 @@ using System.Linq;
 
 namespace Durable.Services
 {
-    public class EnvImpactReportService : IEnvImpactReportService
+    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger) : IEnvImpactReportService
     {
-        private readonly ILogger<EnvImpactReportService> _logger;
-        public EnvImpactReportService(ILogger<EnvImpactReportService> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<EnvImpactReportService> _logger = logger;
 
         public async Task<string> GetReportAsync(ReportBaseModel model)
         {
             try
             {
-                var prompts = await GetPromptsAsync($"{model.ReportName}PromptsFileName");
+                var prompts = GetPrompts($"{model.ReportName}PromptsFileName");
 
                 prompts.Questions = model.ReportName.Equals(ReportTypeReport.Images.Name)
                     ? prompts.Questions
@@ -38,14 +34,14 @@ namespace Durable.Services
                     ? await GetImageOpenAIResponse(prompts)
                     : await GetOpenAIResponse(prompts);
 
-                if (openAIResponses.Any())
+                if (openAIResponses.Count > 0)
                 {
                     // Set a variable to the Documents path.
                     string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
                     string fileName = model.ReportName.Equals(ReportTypeReport.Images.Name)
                         ? Path.Combine(docPath, $"{model.ReportName}-{model.ImageType}-{model.Name}with{model.Additional}.txt")
-                        : Path.Combine(docPath, $"{model.ReportName}-{model.Name}{model.Region ?? ""}With{model.Percentage.ToString()}Percentage.txt");
+                        : Path.Combine(docPath, $"{model.ReportName}-{model.Name}{model.Region ?? ""}With{model.Percentage}Percentage.txt");
 
                     // Append text to an existing file named "WriteLines.txt".
                     using (StreamWriter outputFile = (File.Exists(fileName))
@@ -72,12 +68,11 @@ namespace Durable.Services
             return string.Empty;
         }
 
-        private async Task<PromptModel> GetPromptsAsync(string promptsFileName)
+        private static PromptModel GetPrompts(string promptsFileName)
         {
             string location = Environment.GetEnvironmentVariable(promptsFileName);
-            var path = AppDomain.CurrentDomain.BaseDirectory;
             PromptModel prompts;
-            using (StreamReader r = new StreamReader(location))
+            using (var r = new StreamReader(location))
             {
                 string json = r.ReadToEnd();
                 prompts = JsonConvert.DeserializeObject<PromptModel>(json);

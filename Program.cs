@@ -1,7 +1,7 @@
 using Durable.Services;
 using Durable.Services.Interfaces;
 using Durable.Utilities;
-using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -21,7 +21,7 @@ IHost hostBuilder = new HostBuilder()
     .ConfigureServices((hostContext, services) =>
     {
         services.AddSingleton<IEnvImpactReportService, EnvImpactReportService>();
-        services.AddSingleton<IServiceProviderValidatorFactory, ServiceProviderValidatorFactory>();
+        services.AddSingleton<IServiceProviderValidatorFactory, Durable.Utilities.ServiceProviderValidatorFactory>();
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
     })
     .Build();

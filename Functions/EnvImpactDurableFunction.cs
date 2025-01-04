@@ -15,7 +15,6 @@ using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
-using System.Net;
 
 namespace Durable.Functions
 {
@@ -90,7 +89,9 @@ namespace Durable.Functions
 
             // Returns an HTTP 202 response with an instance management payload.
             // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-            return await client.CreateCheckStatusResponseAsync(req, instanceId, HttpStatusCode.Accepted);
+
+            TimeSpan duration = TimeSpan.FromSeconds(30);
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId, duration, true, true);
         }
 
         [Function("GetResourcesEnvImpact")]
@@ -120,7 +121,9 @@ namespace Durable.Functions
 
             // Returns an HTTP 202 response with an instance management payload.
             // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-            return await client.CreateCheckStatusResponseAsync(req, instanceId, HttpStatusCode.Accepted);
+
+            TimeSpan duration = TimeSpan.FromSeconds(30);
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId, duration, true, true);
         }
 
         [Function("GetImageEnvImpact")]
@@ -150,7 +153,9 @@ namespace Durable.Functions
 
             // Returns an HTTP 202 response with an instance management payload.
             // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-            return await client.CreateCheckStatusResponseAsync(req, instanceId, HttpStatusCode.Accepted);
+
+            TimeSpan duration = TimeSpan.FromSeconds(30);
+            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId, duration, true, true);
         }
 
         private static async Task<(GetBaseRequest reportRequest, ValidationResult validationResult)> GetBaseRequestAsync(IDictionary<string, string> query, string reportName)
@@ -160,7 +165,7 @@ namespace Durable.Functions
             query.TryGetValue("percentage", out string? percentage);
             query.TryGetValue("additional", out string? additional);
             query.TryGetValue("Type", out string? type);
-            var imageType = string.Empty;
+            string imageType = string.Empty;
             switch (type)
             {
                 case "1":

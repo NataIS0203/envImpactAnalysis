@@ -6,5 +6,5 @@
 * Durable functions are able to accommodate to any delays in processing requests.
 
 * additional endpoint http://localhost:xxx/api/images?name=(string)&additional=(string)&type=(int?) to DALL-e-2 model
-* Query parameters: _name_ - main object, additional - any _additional_ info for prompt, will come with the word "with" after the _name_, and _type_ -  enumerable value based on: 1 - Photography, 2 - Drawing, 3 - Painting and 4 - Sketch.
-* Function created or update file with url to the generated image
+* Query parameters: _name_ - main object, _additional_ - any additional info for prompt, will come with the word "with" after the _name_, and _type_ -  enumerable value based on: 1 - Photography, 2 - Drawing, 3 - Painting and 4 - Sketch.
+* Function creates or updates file with url to the generated image

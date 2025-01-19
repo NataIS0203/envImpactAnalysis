@@ -78,13 +78,13 @@ namespace Durable.Services
             var collection = database.GetCollection<BsonDocument>(Environment.GetEnvironmentVariable("MongoDBCollection"));
             var filter = Builders<BsonDocument>.Filter.Eq("type", promptsName);
             var promptDocuments = collection.Find(filter).ToList();
-            var promptList = new List<string>();
+            var prompt = new PromptModel { Questions = new List<string>() };
             promptDocuments.ForEach(z =>
             {
-                promptList.Add(z.GetElement("question").ToString());
+                prompt.Questions.Add(z.GetElement("question").ToString());
             }); 
 
-            return new PromptModel { Questions = promptList};
+            return prompt;
         }
 
         private async Task<List<string>> GetOpenAIResponse(PromptModel prompts)

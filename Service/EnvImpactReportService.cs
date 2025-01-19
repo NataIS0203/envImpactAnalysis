@@ -81,7 +81,8 @@ namespace Durable.Services
             var prompt = new PromptModel { Questions = new List<string>() };
             promptDocuments.ForEach(z =>
             {
-                prompt = JsonConvert.DeserializeObject<PromptModel>(z.ToString());
+               var promptTemp = JsonConvert.DeserializeObject<PromptModel>(z.ToString());
+                prompt.Questions.AddRange(promptTemp?.Questions);
             }); 
 
             return prompt;

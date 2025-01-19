@@ -76,12 +76,12 @@ namespace Durable.Services
             MongoClient dbClient = new MongoClient(Environment.GetEnvironmentVariable("MongoDBConnect"));
             var database = dbClient.GetDatabase(Environment.GetEnvironmentVariable("MongoDB"));
             var collection = database.GetCollection<BsonDocument>(Environment.GetEnvironmentVariable("MongoDBCollection"));
-            var filter = Builders<BsonDocument>.Filter.Eq("type", promptsName);
+            var filter = Builders<BsonDocument>.Filter.Eq("types", promptsName);
             var promptDocuments = collection.Find(filter).ToList();
             var prompt = new PromptModel { Questions = new List<string>() };
             promptDocuments.ForEach(z =>
             {
-                prompt.Questions.Add(z.GetElement("question").ToString());
+                prompt = JsonConvert.DeserializeObject<PromptModel>(z.ToString());
             }); 
 
             return prompt;

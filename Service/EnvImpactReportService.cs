@@ -7,8 +7,11 @@ using Newtonsoft.Json;
 using OpenAI.Chat;
 using OpenAI.Images;
 using System.ClientModel;
+using MongoDB.Driver;
+
 using System.IO;
 using System.Linq;
+using MongoDB.Bson;
 
 namespace Durable.Services
 {
@@ -20,7 +23,7 @@ namespace Durable.Services
         {
             try
             {
-                var prompts = GetPrompts($"{model.ReportName}PromptsFileName");
+                var prompts = GetPrompts($"{model.ReportName}");
 
                 prompts.Questions = model.ReportName.Equals(ReportTypeReport.Images.Name)
                     ? prompts.Questions
@@ -68,17 +71,20 @@ namespace Durable.Services
             return string.Empty;
         }
 
-        private static PromptModel GetPrompts(string promptsFileName)
+        private static PromptModel GetPrompts(string promptsName)
         {
-            string location = Environment.GetEnvironmentVariable(promptsFileName);
-            PromptModel prompts;
-            using (var r = new StreamReader(location))
+            MongoClient dbClient = new MongoClient(Environment.GetEnvironmentVariable("MongoDBConnect"));
+            var database = dbClient.GetDatabase(Environment.GetEnvironmentVariable("MongoDB"));
+            var collection = database.GetCollection<BsonDocument>(Environment.GetEnvironmentVariable("MongoDBCollection"));
+            var filter = Builders<BsonDocument>.Filter.Eq("type", promptsName);
+            var promptDocuments = collection.Find(filter).ToList();
+            var promptList = new List<string>();
+            promptDocuments.ForEach(z =>
             {
-                string json = r.ReadToEnd();
-                prompts = JsonConvert.DeserializeObject<PromptModel>(json);
-            }
+                promptList.Add(z.GetElement("question").ToString());
+            }); 
 
-            return prompts;
+            return new PromptModel { Questions = promptList};
         }
 
         private async Task<List<string>> GetOpenAIResponse(PromptModel prompts)

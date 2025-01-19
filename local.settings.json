@@ -3,12 +3,12 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "OpenAPIKey": "key",
-    "ResourcesPromptsFileName": "resourcesPrompts.txt",
-    "SpeciesPromptsFileName": "speciesPrompts.txt",
-    "ImagesPromptsFileName": "imagesPrompts.txt",
+    "OpenAPIKey": "[key]",
     "AssistantPrompt": "You are a helpful assistant. Help me with environmental impact research",
     "ChatGPTModel": "gpt-4o-mini",
-    "ImageDallEModel": "dall-e-2"
+    "ImageDallEModel": "dall-e-2",
+    "MongoDBConnect": "[connection]",
+    "MongoDB": "prompts",
+    "MongoDBCollection": "GenAI"
   }
 }

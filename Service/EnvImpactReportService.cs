@@ -12,18 +12,20 @@ using MongoDB.Driver;
 using System.IO;
 using System.Linq;
 using MongoDB.Bson;
+using Durable.Utilities;
 
 namespace Durable.Services
 {
-    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger) : IEnvImpactReportService
+    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger, IMongoDbRepository mongoDbRepository) : IEnvImpactReportService
     {
         private readonly ILogger<EnvImpactReportService> _logger = logger;
+        private readonly IMongoDbRepository _mongoDbRepository = mongoDbRepository;
 
         public async Task<string> GetReportAsync(ReportBaseModel model)
         {
             try
             {
-                var prompts = GetPrompts($"{model.ReportName}");
+                var prompts = await GetPrompts($"{model.ReportName}");
 
                 prompts.Questions = model.ReportName.Equals(ReportTypeReport.Images.Name)
                     ? prompts.Questions
@@ -71,19 +73,16 @@ namespace Durable.Services
             return string.Empty;
         }
 
-        private static PromptModel GetPrompts(string promptsName)
+        private async Task<PromptModel> GetPrompts(string promptsName)
         {
-            MongoClient dbClient = new MongoClient(Environment.GetEnvironmentVariable("MongoDBConnect"));
-            var database = dbClient.GetDatabase(Environment.GetEnvironmentVariable("MongoDB"));
-            var collection = database.GetCollection<BsonDocument>(Environment.GetEnvironmentVariable("MongoDBCollection"));
-            var filter = Builders<BsonDocument>.Filter.Eq("types", promptsName);
-            var promptDocuments = collection.Find(filter).ToList();
-            var prompt = new PromptModel { Questions = new List<string>() };
+            var promptDocuments = await _mongoDbRepository.GetQueryByFilter("types", promptsName);
+            var list = new List<string>();
+            var prompt = new PromptModel { Questions = list };
             promptDocuments.ForEach(z =>
             {
-               var promptTemp = JsonConvert.DeserializeObject<PromptModel>(z.ToString());
-                prompt.Questions.AddRange(promptTemp?.Questions);
-            }); 
+                var promptTemp = JsonConvert.DeserializeObject<PromptModel>(z.ToString());
+                list.AddRange(promptTemp?.Questions);
+            });
 
             return prompt;
         }
@@ -133,10 +132,10 @@ namespace Durable.Services
             var result = new List<string>();
             try
             {
-                ImageClient client = new (model: Environment.GetEnvironmentVariable("ImageDallEModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
+                ImageClient client = new(model: Environment.GetEnvironmentVariable("ImageDallEModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
 
                 var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
-                var promprMessage = prompts.Questions.FirstOrDefault()??"random";
+                var promprMessage = prompts.Questions.FirstOrDefault() ?? "random";
                 var imageOptions = new ImageGenerationOptions();
                 // Initialize cancellation token
                 var cancellationToken = new CancellationToken();

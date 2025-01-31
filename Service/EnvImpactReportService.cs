@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Durable.Records;
+﻿using Durable.Records;
 using Durable.Service.Models;
 using Durable.Services.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -13,19 +12,22 @@ using System.IO;
 using System.Linq;
 using MongoDB.Bson;
 using Durable.Utilities;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace Durable.Services
 {
-    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger, IMongoDbRepository mongoDbRepository) : IEnvImpactReportService
+    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger, IMongoDbRepository mongoDbRepository,  private readonly IHttpClientFactory httpClientFactory) : IEnvImpactReportService
     {
         private readonly ILogger<EnvImpactReportService> _logger = logger;
         private readonly IMongoDbRepository _mongoDbRepository = mongoDbRepository;
+        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
         public async Task<string> GetReportAsync(ReportBaseModel model)
         {
             try
             {
-                var prompts = await GetPrompts($"{model.ReportName}");
+                var prompts = await GetPromptsAsync($"{model.ReportName}PromptsFileName");
 
                 prompts.Questions = model.ReportName.Equals(ReportTypeReport.Images.Name)
                     ? prompts.Questions
@@ -73,7 +75,49 @@ namespace Durable.Services
             return string.Empty;
         }
 
-        private async Task<PromptModel> GetPrompts(string promptsName)
+
+        public async Task<HttpResponseMessage> Execute(string url, object body = null, string authToken = null)
+        {
+            HttpResponseMessage? response = null;
+
+            using (HttpClient httpClient = _httpClientFactory.CreateClient("default"))
+            {
+                httpClient.DefaultRequestHeaders.Clear();
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                if (authToken != null)
+                {
+                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                }
+
+                if (body != null)
+                {
+                    if (!(body is string))
+                    {
+                        body = JsonConvert.SerializeObject(body);
+                    }
+
+                    StringContent content = new StringContent(body.ToString(), Encoding.UTF8, "application/json");
+                    response = await httpClient.PostAsync(url, content);
+                }
+                else
+                {
+                    response = await httpClient.GetAsync(url);
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation($"{nameof(Execute)}: Successfully hit URL: '{url}'");
+                }
+                else
+                {
+                    _logger.LogError($"{nameof(Execute)}: Failed to hit URL: '{url}'. Response: {(int)response.StatusCode + " : " + response.ReasonPhrase}");
+                }
+            }
+
+            return response;
+        }
+        private async Task<PromptModel> GetPromptsAsync(string promptsName)
         {
             var promptDocuments = await _mongoDbRepository.GetQueryByFilter("types", promptsName);
             var list = new List<string>();
@@ -94,7 +138,7 @@ namespace Durable.Services
             {
                 ChatClient client = new(model: Environment.GetEnvironmentVariable("ChatGPTModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
 
-                var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
+                vvar promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
                 var promprChatMessage = prompts.Questions.Select(z => new UserChatMessage(z));
                 var messages = new List<ChatMessage>();
                 messages.AddRange(promprAssitChatMessage);
@@ -132,7 +176,7 @@ namespace Durable.Services
             var result = new List<string>();
             try
             {
-                ImageClient client = new(model: Environment.GetEnvironmentVariable("ImageDallEModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
+                ImageClient client = new (model: Environment.GetEnvironmentVariable("ImageDallEModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
 
                 var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
                 var promprMessage = prompts.Questions.FirstOrDefault() ?? "random";

@@ -2,6 +2,7 @@ using AutoMapper;
 using Durable.Api.Functions;
 using Durable.Functions.Models;
 using Durable.Functions.Validators;
+using Durable.Models;
 using Durable.Records;
 using Durable.Service.Models;
 using Durable.Services.Interfaces;
@@ -15,6 +16,8 @@ using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
+using System.Web.Http;
 
 namespace Durable.Functions
 {
@@ -85,13 +88,7 @@ namespace Durable.Functions
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
                 nameof(EnvImpactDurableFunction), reportRequest);
 
-            _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-            // Returns an HTTP 202 response with an instance management payload.
-            // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-
-            TimeSpan duration = TimeSpan.FromSeconds(30);
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId, duration, true, true);
+            return await GetOutputAsync(instanceId, req, client);
         }
 
         [Function("GetResourcesEnvImpact")]
@@ -117,13 +114,7 @@ namespace Durable.Functions
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
                 nameof(EnvImpactDurableFunction), reportRequest);
 
-            _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-            // Returns an HTTP 202 response with an instance management payload.
-            // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-
-            TimeSpan duration = TimeSpan.FromSeconds(30);
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId, duration, true, true);
+            return await GetOutputAsync(instanceId, req, client);
         }
 
         [Function("GetImageEnvImpact")]
@@ -149,13 +140,7 @@ namespace Durable.Functions
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
                 nameof(EnvImpactDurableFunction), reportRequest);
 
-            _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-
-            // Returns an HTTP 202 response with an instance management payload.
-            // See https://learn.microsoft.com/azure/azure-functions/durable/durable-functions-http-api#start-orchestration
-
-            TimeSpan duration = TimeSpan.FromSeconds(30);
-            return await client.WaitForCompletionOrCreateCheckStatusResponseAsync(req, instanceId, duration, true, true);
+            return await GetOutputAsync(instanceId, req, client);
         }
 
         private static async Task<(GetBaseRequest reportRequest, ValidationResult validationResult)> GetBaseRequestAsync(IDictionary<string, string> query, string reportName)
@@ -192,6 +177,41 @@ namespace Durable.Functions
             ValidationResult validationResult = validator.Validate(result);
 
             return (result, validationResult);
+        }
+        private async Task<HttpResponseData> GetOutputAsync(string instanceId, HttpRequestData req, DurableTaskClient client)
+        {
+            _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
+            TimeSpan duration = TimeSpan.FromSeconds(30);
+            TimeSpan interval = TimeSpan.FromSeconds(2);
+            long start = DateTime.Now.Ticks;
+            bool isNoOutput = true;
+            HttpManagementPayload result = client.CreateHttpManagementPayload(instanceId, req);
+            string? headers = result.StatusQueryGetUri;
+            DataExportOutputResponse response = new DataExportOutputResponse();
+            do
+            {
+                HttpResponseMessage responseObject = await _envImpactReportService.Execute(headers);
+
+                if (!responseObject.IsSuccessStatusCode)
+                {
+                    throw new HttpResponseException(responseObject);
+                }
+
+                string responseString = await responseObject.Content.ReadAsStringAsync();
+                if (responseString != null)
+                {
+                    DurableResponse currentResponse = JsonConvert.DeserializeObject<DurableResponse>(responseString);
+                    if (currentResponse?.RuntimeStatus != null && currentResponse.RuntimeStatus.Equals("Completed"))
+                    {
+                        return await HandleSuccessResponse(req, _mapper.Map<GetOutputResponse>(currentResponse));
+                    }
+                }
+
+                Task.Delay(interval).Wait();
+            }
+            while (isNoOutput && (DateTime.Now.Ticks - start) < duration.Ticks);
+
+            return await HandleSuccessResponse(req, response);
         }
     }
 }

@@ -17,6 +17,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
+using System.Net;
 using System.Web.Http;
 
 namespace Durable.Functions
@@ -68,6 +69,7 @@ namespace Durable.Functions
         [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The Specie parameter to filter on")]
         [OpenApiParameter(name: "region", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "The Region parameter to filter on")]
         [OpenApiParameter(name: "percentage", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = "The Percentage parameter to filter on")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(GetOutputResponse))]
         public async Task<HttpResponseData> GetSpeciesEnvImpact(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "species")] HttpRequestData req,
             [DurableClient] DurableTaskClient client,
@@ -87,8 +89,7 @@ namespace Durable.Functions
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
                 nameof(EnvImpactDurableFunction), reportRequest);
-
-            return await GetOutputAsync(instanceId, req, client);
+           return await GetOutputAsync(instanceId, req, client);
         }
 
         [Function("GetResourcesEnvImpact")]
@@ -96,6 +97,7 @@ namespace Durable.Functions
         [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The Resource parameter to filter on")]
         [OpenApiParameter(name: "region", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "The Region parameter to filter on")]
         [OpenApiParameter(name: "percentage", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = "The Percentage parameter to filter on")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(GetOutputResponse))]
         public async Task<HttpResponseData> GetResourcesEnvImpact(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "resources")] HttpRequestData req,
             [DurableClient] DurableTaskClient client,
@@ -109,7 +111,6 @@ namespace Durable.Functions
             {
                 return await HandleValidationResponse(req, validationResult);
             }
-
             // Function input comes from the request content.
             string instanceId = await client.ScheduleNewOrchestrationInstanceAsync(
                 nameof(EnvImpactDurableFunction), reportRequest);
@@ -122,6 +123,7 @@ namespace Durable.Functions
         [OpenApiParameter(name: "name", In = ParameterLocation.Query, Required = true, Type = typeof(string), Description = "The Resource parameter to filter on")]
         [OpenApiParameter(name: "additional", In = ParameterLocation.Query, Required = false, Type = typeof(string), Description = "The Additional parameter to filter on")]
         [OpenApiParameter(name: "type", In = ParameterLocation.Query, Required = false, Type = typeof(int), Description = "The Type parameter to filter on")]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(GetOutputResponse))]
         public async Task<HttpResponseData> GetImageEnvImpact(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "images")] HttpRequestData req,
             [DurableClient] DurableTaskClient client,
@@ -181,13 +183,13 @@ namespace Durable.Functions
         private async Task<HttpResponseData> GetOutputAsync(string instanceId, HttpRequestData req, DurableTaskClient client)
         {
             _logger.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
-            TimeSpan duration = TimeSpan.FromSeconds(30);
+            TimeSpan duration = TimeSpan.FromSeconds(10);
             TimeSpan interval = TimeSpan.FromSeconds(2);
             long start = DateTime.Now.Ticks;
             bool isNoOutput = true;
             HttpManagementPayload result = client.CreateHttpManagementPayload(instanceId, req);
             string? headers = result.StatusQueryGetUri;
-            DataExportOutputResponse response = new DataExportOutputResponse();
+            var response = new GetOutputResponse();
             do
             {
                 HttpResponseMessage responseObject = await _envImpactReportService.Execute(headers);
@@ -200,10 +202,10 @@ namespace Durable.Functions
                 string responseString = await responseObject.Content.ReadAsStringAsync();
                 if (responseString != null)
                 {
-                    DurableResponse currentResponse = JsonConvert.DeserializeObject<DurableResponse>(responseString);
+                    var currentResponse = JsonConvert.DeserializeObject<DurableResponse>(responseString);
                     if (currentResponse?.RuntimeStatus != null && currentResponse.RuntimeStatus.Equals("Completed"))
                     {
-                        return await HandleSuccessResponse(req, _mapper.Map<GetOutputResponse>(currentResponse));
+                        return await HandleSuccessResponse(req, _mapper.Map<GetOutputResponse>(currentResponse), HttpStatusCode.OK);
                     }
                 }
 

@@ -17,7 +17,7 @@ using System.Text;
 
 namespace Durable.Services
 {
-    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger, IMongoDbRepository mongoDbRepository,  private readonly IHttpClientFactory httpClientFactory) : IEnvImpactReportService
+    public class EnvImpactReportService(ILogger<EnvImpactReportService> logger, IMongoDbRepository mongoDbRepository, IHttpClientFactory httpClientFactory) : IEnvImpactReportService
     {
         private readonly ILogger<EnvImpactReportService> _logger = logger;
         private readonly IMongoDbRepository _mongoDbRepository = mongoDbRepository;
@@ -27,7 +27,7 @@ namespace Durable.Services
         {
             try
             {
-                var prompts = await GetPromptsAsync($"{model.ReportName}PromptsFileName");
+                var prompts = await GetPromptsAsync($"{model.ReportName}");
 
                 prompts.Questions = model.ReportName.Equals(ReportTypeReport.Images.Name)
                     ? prompts.Questions
@@ -138,7 +138,7 @@ namespace Durable.Services
             {
                 ChatClient client = new(model: Environment.GetEnvironmentVariable("ChatGPTModel"), apiKey: Environment.GetEnvironmentVariable("OpenAPIKey"));
 
-                vvar promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
+                var promprAssitChatMessage = prompts.Questions.Select(z => new AssistantChatMessage(Environment.GetEnvironmentVariable("AssistantPrompt")));
                 var promprChatMessage = prompts.Questions.Select(z => new UserChatMessage(z));
                 var messages = new List<ChatMessage>();
                 messages.AddRange(promprAssitChatMessage);

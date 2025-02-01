@@ -8,7 +8,5 @@ namespace Durable.Functions.Models
         public string RuntimeStatus { get; set; }
 
         public string Output { get; set; }
-
-        public CustomStatus CustomStatus { get; set; }
     }
 }

@@ -22,8 +22,10 @@ IHost hostBuilder = new HostBuilder()
     .ConfigureServices((hostContext, services) =>
     {
         services.AddSingleton<IEnvImpactReportService, EnvImpactReportService>();
-        services.AddSingleton<IMongoDbRepository, MongoDbRepository>();
-        services.AddSingleton<IServiceProviderValidatorFactory, Durable.Utilities.ServiceProviderValidatorFactory>();
+        services.AddSingleton<IMongoDbRepository, MongoDbRepository>();      
+        services.AddSingleton<IServiceProviderValidatorFactory, ServiceProviderValidatorFactory>();
+        services.AddHttpClient();
+
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
     })
     .Build();
